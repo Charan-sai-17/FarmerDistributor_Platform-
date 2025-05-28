@@ -6,17 +6,23 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { User, Home, Calendar, Bell } from 'lucide-react';
+import { User, Home, Calendar, Bell, Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { AppProvider, useApp } from '@/contexts/AppContext';
+import AddCropForm from '@/components/farmer/AddCropForm';
+import CropCard from '@/components/farmer/CropCard';
+import CropMarketplace from '@/components/distributor/CropMarketplace';
+import VerificationDashboard from '@/components/agent/VerificationDashboard';
 
-const Index = () => {
+const AppContent = () => {
   const [currentView, setCurrentView] = useState('landing');
   const [selectedRole, setSelectedRole] = useState('');
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
-  const [userRole, setUserRole] = useState('');
+  const [showAddCrop, setShowAddCrop] = useState(false);
   const { toast } = useToast();
+  const { user, setUser, crops, contracts } = useApp();
 
   const handleRoleSelect = (role: string) => {
     setSelectedRole(role);
@@ -35,7 +41,15 @@ const Index = () => {
 
   const handleVerifyOTP = () => {
     if (otp.length === 6) {
-      setUserRole(selectedRole);
+      const newUser = {
+        id: selectedRole + '1',
+        name: `${selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1)} User`,
+        phone,
+        role: selectedRole as 'farmer' | 'distributor' | 'agent',
+        location: 'Guntur, AP',
+        walletBalance: selectedRole === 'distributor' ? 250000 : 15000
+      };
+      setUser(newUser);
       setCurrentView('dashboard');
       toast({
         title: "Welcome!",
@@ -44,6 +58,7 @@ const Index = () => {
     }
   };
 
+  // Landing Page
   if (currentView === 'landing') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-amber-50">
@@ -112,6 +127,7 @@ const Index = () => {
     );
   }
 
+  // Role Selection
   if (currentView === 'role-select') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-amber-50 flex items-center justify-center">
@@ -155,6 +171,7 @@ const Index = () => {
     );
   }
 
+  // Authentication
   if (currentView === 'auth') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-amber-50 flex items-center justify-center">
@@ -225,6 +242,11 @@ const Index = () => {
     );
   }
 
+  // Add Crop Form
+  if (showAddCrop && user?.role === 'farmer') {
+    return <AddCropForm onBack={() => setShowAddCrop(false)} />;
+  }
+
   // Dashboard View
   return (
     <div className="min-h-screen bg-gray-50">
@@ -239,7 +261,7 @@ const Index = () => {
               <div>
                 <span className="text-lg font-heading font-semibold">AgroConnect</span>
                 <Badge variant="secondary" className="ml-2">
-                  {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
+                  {user?.role.charAt(0).toUpperCase() + user?.role.slice(1)}
                 </Badge>
               </div>
             </div>
@@ -260,8 +282,8 @@ const Index = () => {
         <Tabs defaultValue="dashboard" className="w-full">
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-            <TabsTrigger value="crops">
-              {userRole === 'farmer' ? 'My Crops' : userRole === 'distributor' ? 'Market' : 'Tasks'}
+            <TabsTrigger value="main">
+              {user?.role === 'farmer' ? 'My Crops' : user?.role === 'distributor' ? 'Market' : 'Tasks'}
             </TabsTrigger>
             <TabsTrigger value="contracts">Contracts</TabsTrigger>
             <TabsTrigger value="wallet">Wallet</TabsTrigger>
@@ -273,65 +295,65 @@ const Index = () => {
               <Card className="glass-card">
                 <CardContent className="p-6">
                   <h1 className="text-2xl font-heading font-bold mb-2">
-                    Welcome back! 👋
+                    Welcome back, {user?.name}! 👋
                   </h1>
                   <p className="text-gray-600">
-                    {userRole === 'farmer' && "Manage your crops and track your earnings"}
-                    {userRole === 'distributor' && "Discover new crops and manage your investments"}
-                    {userRole === 'agent' && "Review verification tasks and update crop status"}
+                    {user?.role === 'farmer' && "Manage your crops and track your earnings"}
+                    {user?.role === 'distributor' && "Discover new crops and manage your investments"}
+                    {user?.role === 'agent' && "Review verification tasks and update crop status"}
                   </p>
                 </CardContent>
               </Card>
 
               {/* Stats Grid */}
               <div className="grid md:grid-cols-3 gap-4">
-                {userRole === 'farmer' && (
+                {user?.role === 'farmer' && (
                   <>
                     <Card>
                       <CardContent className="p-4 text-center">
-                        <div className="text-2xl font-mono font-bold text-primary">3</div>
+                        <div className="text-2xl font-mono font-bold text-primary">{crops.filter(c => c.farmerId === user.id).length}</div>
                         <div className="text-sm text-gray-600">Active Crops</div>
                       </CardContent>
                     </Card>
                     <Card>
                       <CardContent className="p-4 text-center">
-                        <div className="text-2xl font-mono font-bold text-green-600">₹45,000</div>
+                        <div className="text-2xl font-mono font-bold text-green-600">₹{crops.filter(c => c.farmerId === user.id).reduce((sum, c) => sum + c.price, 0).toLocaleString()}</div>
                         <div className="text-sm text-gray-600">Expected Returns</div>
                       </CardContent>
                     </Card>
                     <Card>
                       <CardContent className="p-4 text-center">
-                        <div className="text-2xl font-mono font-bold text-orange-600">2</div>
+                        <div className="text-2xl font-mono font-bold text-orange-600">{crops.filter(c => c.farmerId === user.id && c.status === 'pending').length}</div>
                         <div className="text-sm text-gray-600">Pending Verification</div>
                       </CardContent>
                     </Card>
                   </>
                 )}
 
-                {userRole === 'distributor' && (
+                {user?.role === 'distributor' && (
                   <>
                     <Card>
                       <CardContent className="p-4 text-center">
-                        <div className="text-2xl font-mono font-bold text-blue-600">12</div>
+                        <div className="text-2xl font-mono font-bold text-blue-600">{crops.filter(c => c.status === 'verified').length}</div>
                         <div className="text-sm text-gray-600">Available Crops</div>
                       </CardContent>
                     </Card>
                     <Card>
                       <CardContent className="p-4 text-center">
-                        <div className="text-2xl font-mono font-bold text-green-600">₹2,50,000</div>
+                        <div className="text-2xl font-mono font-bold text-green-600">₹{user.walletBalance.toLocaleString()}</div>
                         <div className="text-sm text-gray-600">Wallet Balance</div>
                       </CardContent>
                     </Card>
                     <Card>
                       <CardContent className="p-4 text-center">
-                        <div className="text-2xl font-mono font-bold text-purple-600">5</div>
+                        <div className="text-2xl font-mono font-bold text-purple-600">{contracts.filter(c => c.distributorId === user.id).length}</div>
                         <div className="text-sm text-gray-600">Active Contracts</div>
                       </CardContent>
                     </Card>
                   </>
                 )}
 
-                {userRole === 'agent' && (
+                {user?.role === 'agent' && (
                   <>
                     <Card>
                       <CardContent className="p-4 text-center">
@@ -341,7 +363,7 @@ const Index = () => {
                     </Card>
                     <Card>
                       <CardContent className="p-4 text-center">
-                        <div className="text-2xl font-mono font-bold text-green-600">₹15,800</div>
+                        <div className="text-2xl font-mono font-bold text-green-600">₹{user.walletBalance.toLocaleString()}</div>
                         <div className="text-sm text-gray-600">Monthly Earnings</div>
                       </CardContent>
                     </Card>
@@ -379,22 +401,62 @@ const Index = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="crops">
-            <Card>
-              <CardContent className="p-6">
-                <h3 className="font-heading font-semibold mb-4">
-                  {userRole === 'farmer' ? 'My Crops' : userRole === 'distributor' ? 'Crop Market' : 'Verification Tasks'}
-                </h3>
-                <p className="text-gray-600">This section is under development.</p>
-              </CardContent>
-            </Card>
+          <TabsContent value="main">
+            {user?.role === 'farmer' && (
+              <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                  <h2 className="text-2xl font-heading font-bold">My Crops</h2>
+                  <Button onClick={() => setShowAddCrop(true)}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add New Crop
+                  </Button>
+                </div>
+                <div className="space-y-4">
+                  {crops.filter(crop => crop.farmerId === user.id).map(crop => (
+                    <CropCard
+                      key={crop.id}
+                      crop={crop}
+                      onViewDetails={(crop) => console.log('View details:', crop)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {user?.role === 'distributor' && <CropMarketplace />}
+            
+            {user?.role === 'agent' && <VerificationDashboard />}
           </TabsContent>
 
           <TabsContent value="contracts">
             <Card>
               <CardContent className="p-6">
                 <h3 className="font-heading font-semibold mb-4">Contracts</h3>
-                <p className="text-gray-600">Contract management coming soon.</p>
+                <div className="space-y-4">
+                  {contracts.filter(contract => 
+                    contract.farmerId === user?.id || 
+                    contract.distributorId === user?.id || 
+                    contract.agentId === user?.id
+                  ).map(contract => (
+                    <div key={contract.id} className="border rounded-lg p-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h4 className="font-semibold">Contract #{contract.id}</h4>
+                          <p className="text-sm text-gray-600">Crop ID: {contract.cropId}</p>
+                        </div>
+                        <Badge className={
+                          contract.status === 'active' ? 'bg-green-100 text-green-800' :
+                          contract.status === 'draft' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-gray-100 text-gray-800'
+                        }>
+                          {contract.status}
+                        </Badge>
+                      </div>
+                      <p className="text-lg font-mono font-bold text-primary">₹{contract.price.toLocaleString()}</p>
+                      <p className="text-sm text-gray-600 mt-2">{contract.terms}</p>
+                    </div>
+                  ))}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -403,13 +465,30 @@ const Index = () => {
             <Card>
               <CardContent className="p-6">
                 <h3 className="font-heading font-semibold mb-4">Wallet & Transactions</h3>
-                <p className="text-gray-600">Wallet functionality in development.</p>
+                <div className="text-center py-8">
+                  <div className="text-4xl font-mono font-bold text-primary mb-2">
+                    ₹{user?.walletBalance.toLocaleString()}
+                  </div>
+                  <p className="text-gray-600 mb-6">Current Balance</p>
+                  <div className="flex justify-center space-x-4">
+                    <Button>Add Funds</Button>
+                    <Button variant="outline">Withdraw</Button>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
       </main>
     </div>
+  );
+};
+
+const Index = () => {
+  return (
+    <AppProvider>
+      <AppContent />
+    </AppProvider>
   );
 };
 

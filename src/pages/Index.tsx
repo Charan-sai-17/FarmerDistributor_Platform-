@@ -6,13 +6,19 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { User, Home, Calendar, Bell, Plus } from 'lucide-react';
+import { User, Home, Calendar, Bell, Plus, LogOut, HelpCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { AppProvider, useApp } from '@/contexts/AppContext';
+import { AppProvider, useApp, Crop } from '@/contexts/AppContext';
 import AddCropForm from '@/components/farmer/AddCropForm';
 import CropCard from '@/components/farmer/CropCard';
 import CropMarketplace from '@/components/distributor/CropMarketplace';
 import VerificationDashboard from '@/components/agent/VerificationDashboard';
+import ProfilePage from '@/components/profile/ProfilePage';
+import NotificationsPage from '@/components/notifications/NotificationsPage';
+import NotificationsDropdown from '@/components/notifications/NotificationsDropdown';
+import HelpSupportModal from '@/components/support/HelpSupportModal';
+import CropDetailsModal from '@/components/crop/CropDetailsModal';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 const AppContent = () => {
   const [currentView, setCurrentView] = useState('landing');
@@ -21,6 +27,11 @@ const AppContent = () => {
   const [otp, setOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [showAddCrop, setShowAddCrop] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
+  const [selectedCrop, setSelectedCrop] = useState<Crop | null>(null);
+  const [showCropDetails, setShowCropDetails] = useState(false);
   const { toast } = useToast();
   const { user, setUser, crops, contracts } = useApp();
 
@@ -56,6 +67,24 @@ const AppContent = () => {
         description: `Successfully logged in as ${selectedRole}.`,
       });
     }
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    setCurrentView('landing');
+    setPhone('');
+    setOtp('');
+    setOtpSent(false);
+    setSelectedRole('');
+    toast({
+      title: "Logged Out",
+      description: "You have been successfully logged out.",
+    });
+  };
+
+  const handleViewCropDetails = (crop: Crop) => {
+    setSelectedCrop(crop);
+    setShowCropDetails(true);
   };
 
   // Landing Page
@@ -242,6 +271,16 @@ const AppContent = () => {
     );
   }
 
+  // Profile Page
+  if (showProfile) {
+    return <ProfilePage onBack={() => setShowProfile(false)} />;
+  }
+
+  // Notifications Page
+  if (showNotifications) {
+    return <NotificationsPage onBack={() => setShowNotifications(false)} />;
+  }
+
   // Add Crop Form
   if (showAddCrop && user?.role === 'farmer') {
     return <AddCropForm onBack={() => setShowAddCrop(false)} />;
@@ -266,12 +305,27 @@ const AppContent = () => {
               </div>
             </div>
             <div className="flex items-center space-x-3">
-              <Button variant="ghost" size="sm">
-                <Bell className="w-4 h-4" />
+              <NotificationsDropdown onViewAll={() => setShowNotifications(true)} />
+              <Button variant="ghost" size="sm" onClick={() => setShowHelp(true)}>
+                <HelpCircle className="w-4 h-4" />
               </Button>
-              <Button variant="ghost" size="sm">
-                <User className="w-4 h-4" />
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm">
+                    <User className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setShowProfile(true)}>
+                    <User className="w-4 h-4 mr-2" />
+                    Profile
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>
@@ -416,14 +470,14 @@ const AppContent = () => {
                     <CropCard
                       key={crop.id}
                       crop={crop}
-                      onViewDetails={(crop) => console.log('View details:', crop)}
+                      onViewDetails={handleViewCropDetails}
                     />
                   ))}
                 </div>
               </div>
             )}
             
-            {user?.role === 'distributor' && <CropMarketplace />}
+            {user?.role === 'distributor' && <CropMarketplace onViewDetails={handleViewCropDetails} />}
             
             {user?.role === 'agent' && <VerificationDashboard />}
           </TabsContent>
@@ -480,6 +534,14 @@ const AppContent = () => {
           </TabsContent>
         </Tabs>
       </main>
+
+      {/* Modals */}
+      <HelpSupportModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
+      <CropDetailsModal 
+        isOpen={showCropDetails} 
+        onClose={() => setShowCropDetails(false)} 
+        crop={selectedCrop}
+      />
     </div>
   );
 };

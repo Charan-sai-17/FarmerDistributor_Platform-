@@ -1,183 +1,146 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, Filter, MapPin, Calendar, User } from 'lucide-react';
-import { useApp } from '@/contexts/AppContext';
+import { Input } from '@/components/ui/input';
+import { Eye, ShoppingCart, MapPin } from 'lucide-react';
+import { useApp, Crop } from '@/contexts/AppContext';
 import { useToast } from '@/hooks/use-toast';
 
-const CropMarketplace: React.FC = () => {
-  const { crops, createContract, user } = useApp();
-  const { toast } = useToast();
+interface CropMarketplaceProps {
+  onViewDetails: (crop: Crop) => void;
+}
+
+const CropMarketplace: React.FC<CropMarketplaceProps> = ({ onViewDetails }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
+  const { crops } = useApp();
+  const { toast } = useToast();
 
-  const filteredCrops = crops.filter(crop => {
+  const verifiedCrops = crops.filter(crop => crop.status === 'verified' || crop.status === 'growing');
+
+  const filteredCrops = verifiedCrops.filter(crop => {
     const matchesSearch = crop.cropName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          crop.location.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = selectedFilter === 'all' || crop.status === selectedFilter;
-    return matchesSearch && matchesFilter && crop.status === 'verified';
+    const matchesFilter = selectedFilter === 'all' || crop.cropName.toLowerCase().includes(selectedFilter);
+    return matchesSearch && matchesFilter;
   });
 
-  const handleBuyRequest = (crop: any) => {
-    if (!user) return;
-
-    const newContract = {
-      cropId: crop.id,
-      farmerId: crop.farmerId,
-      distributorId: user.id,
-      price: crop.price,
-      status: 'draft' as const,
-      terms: 'Standard purchase agreement with quality guarantee',
-      milestones: [
-        { id: '1', title: 'Advance Payment', amount: Math.round(crop.price * 0.3), status: 'pending' as const },
-        { id: '2', title: 'Mid-stage Payment', amount: Math.round(crop.price * 0.4), status: 'pending' as const },
-        { id: '3', title: 'Final Payment', amount: Math.round(crop.price * 0.3), status: 'pending' as const }
-      ],
-      createdAt: new Date().toISOString()
-    };
-
-    createContract(newContract);
+  const handlePurchaseRequest = (crop: Crop) => {
     toast({
       title: "Purchase Request Sent",
-      description: "Your contract request has been sent to the farmer."
+      description: `Your purchase request for ${crop.cropName} has been sent to the farmer.`,
     });
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'verified': return 'bg-green-100 text-green-800';
+      case 'growing': return 'bg-blue-100 text-blue-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <h2 className="text-2xl font-heading font-bold">Crop Marketplace</h2>
+        <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
           <Input
-            placeholder="Search crops by name or location..."
+            placeholder="Search crops or location..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
+            className="md:w-64"
           />
-        </div>
-        <div className="flex gap-2">
-          <Button
-            variant={selectedFilter === 'all' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setSelectedFilter('all')}
+          <select
+            value={selectedFilter}
+            onChange={(e) => setSelectedFilter(e.target.value)}
+            className="px-3 py-2 border rounded-md"
           >
-            All
-          </Button>
-          <Button
-            variant={selectedFilter === 'verified' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setSelectedFilter('verified')}
-          >
-            Verified
-          </Button>
-          <Button variant="outline" size="sm">
-            <Filter className="w-4 h-4 mr-2" />
-            Filter
-          </Button>
+            <option value="all">All Crops</option>
+            <option value="tomato">Tomato</option>
+            <option value="rice">Rice</option>
+            <option value="chili">Chili</option>
+          </select>
         </div>
       </div>
 
-      <div className="grid gap-6">
-        {filteredCrops.map((crop) => (
-          <Card key={crop.id} className="hover-lift">
-            <CardContent className="p-6">
-              <div className="flex flex-col md:flex-row gap-6">
-                <div className="md:w-48">
-                  {crop.images[0] && (
-                    <img
-                      src={crop.images[0]}
-                      alt={crop.cropName}
-                      className="w-full h-32 md:h-40 object-cover rounded-lg"
-                    />
-                  )}
-                </div>
-                
-                <div className="flex-1">
-                  <div className="flex items-start justify-between mb-4">
+      <div className="grid gap-4">
+        {filteredCrops.map(crop => (
+          <Card key={crop.id} className="hover-lift transition-all duration-200">
+            <CardContent className="p-4">
+              <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
+                {crop.images[0] && (
+                  <img
+                    src={crop.images[0]}
+                    alt={crop.cropName}
+                    className="w-full md:w-32 h-32 object-cover rounded-lg"
+                  />
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-2 gap-2">
                     <div>
-                      <h3 className="text-xl font-heading font-bold text-gray-900">{crop.cropName}</h3>
-                      <div className="flex items-center text-gray-600 mt-1">
+                      <h3 className="font-heading font-semibold text-lg">{crop.cropName}</h3>
+                      <p className="text-gray-600 text-sm flex items-center">
                         <MapPin className="w-4 h-4 mr-1" />
-                        <span>{crop.location}</span>
-                        <span className="mx-2">•</span>
-                        <span>{crop.area} acres</span>
-                      </div>
+                        {crop.location} • {crop.area} acres
+                      </p>
                     </div>
-                    <Badge className="bg-green-100 text-green-800">
-                      Verified
+                    <Badge className={getStatusColor(crop.status)}>
+                      {crop.status.charAt(0).toUpperCase() + crop.status.slice(1)}
                     </Badge>
                   </div>
+                  
+                  <div className="mb-3">
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>Growth Progress</span>
+                      <span>65%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div className="bg-primary h-2 rounded-full" style={{ width: '65%' }} />
+                    </div>
+                  </div>
 
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                      <p className="text-sm text-gray-500">Seed Date</p>
-                      <p className="font-semibold">{new Date(crop.seedDate).toLocaleDateString()}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Expected Harvest</p>
-                      <p className="font-semibold">{new Date(crop.expectedHarvest).toLocaleDateString()}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Growth Stage</p>
-                      <div className="flex items-center">
-                        <div className="w-full bg-gray-200 rounded-full h-2 mr-2">
-                          <div className="bg-green-500 h-2 rounded-full" style={{ width: '65%' }} />
-                        </div>
-                        <span className="text-sm font-medium">65%</span>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Investment</p>
                       <p className="text-xl font-mono font-bold text-primary">₹{crop.price.toLocaleString()}</p>
+                      <p className="text-xs text-gray-500">Investment Amount</p>
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button variant="outline" size="sm" onClick={() => onViewDetails(crop)}>
+                        <Eye className="w-4 h-4 mr-1" />
+                        View Details
+                      </Button>
+                      <Button size="sm" onClick={() => handlePurchaseRequest(crop)}>
+                        <ShoppingCart className="w-4 h-4 mr-1" />
+                        Request Purchase
+                      </Button>
                     </div>
                   </div>
 
                   {crop.agentNotes.length > 0 && (
-                    <div className="mb-4 p-3 bg-blue-50 rounded-lg">
-                      <p className="text-sm text-blue-800">
-                        <strong>Agent Verification:</strong> {crop.agentNotes[crop.agentNotes.length - 1]}
+                    <div className="mt-3 p-2 bg-green-50 rounded text-sm">
+                      <p className="text-green-800">
+                        <strong>Agent Verified:</strong> {crop.agentNotes[crop.agentNotes.length - 1]}
                       </p>
                     </div>
                   )}
-
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center text-sm text-gray-600">
-                      <User className="w-4 h-4 mr-1" />
-                      <span>Farmer ID: {crop.farmerId}</span>
-                      <span className="mx-2">•</span>
-                      <Calendar className="w-4 h-4 mr-1" />
-                      <span>Listed {Math.floor(Math.random() * 5) + 1} days ago</span>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline">
-                        View Details
-                      </Button>
-                      <Button onClick={() => handleBuyRequest(crop)}>
-                        Send Purchase Request
-                      </Button>
-                    </div>
-                  </div>
                 </div>
               </div>
             </CardContent>
           </Card>
         ))}
-      </div>
 
-      {filteredCrops.length === 0 && (
-        <Card>
-          <CardContent className="p-12 text-center">
-            <div className="text-gray-500">
-              <Search className="w-16 h-16 mx-auto mb-4 opacity-50" />
-              <h3 className="text-lg font-semibold mb-2">No crops found</h3>
-              <p>Try adjusting your search criteria or check back later for new listings.</p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+        {filteredCrops.length === 0 && (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <p className="text-gray-500">No crops found matching your criteria.</p>
+              <p className="text-sm text-gray-400 mt-2">Try adjusting your search or filters.</p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
 };

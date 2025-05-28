@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -76,6 +75,11 @@ const AppContent = () => {
     setOtp('');
     setOtpSent(false);
     setSelectedRole('');
+    setShowProfile(false);
+    setShowNotifications(false);
+    setShowHelp(false);
+    setShowAddCrop(false);
+    setShowCropDetails(false);
     toast({
       title: "Logged Out",
       description: "You have been successfully logged out.",
@@ -290,7 +294,7 @@ const AppContent = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <header className="bg-white shadow-sm border-b sticky top-0 z-40">
         <div className="container mx-auto px-4 py-3">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-3">
@@ -306,21 +310,27 @@ const AppContent = () => {
             </div>
             <div className="flex items-center space-x-3">
               <NotificationsDropdown onViewAll={() => setShowNotifications(true)} />
-              <Button variant="ghost" size="sm" onClick={() => setShowHelp(true)}>
+              <Button variant="ghost" size="sm" onClick={() => setShowHelp(true)} className="hover:bg-gray-100">
                 <HelpCircle className="w-4 h-4" />
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm">
+                  <Button variant="ghost" size="sm" className="hover:bg-gray-100">
                     <User className="w-4 h-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setShowProfile(true)}>
+                <DropdownMenuContent align="end" className="w-48 bg-white border shadow-lg z-50">
+                  <DropdownMenuItem 
+                    onClick={() => setShowProfile(true)}
+                    className="cursor-pointer hover:bg-gray-50 focus:bg-gray-50"
+                  >
                     <User className="w-4 h-4 mr-2" />
-                    Profile
+                    View Profile
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleLogout}>
+                  <DropdownMenuItem 
+                    onClick={handleLogout}
+                    className="cursor-pointer hover:bg-gray-50 focus:bg-gray-50 text-red-600"
+                  >
                     <LogOut className="w-4 h-4 mr-2" />
                     Logout
                   </DropdownMenuItem>
@@ -334,13 +344,13 @@ const AppContent = () => {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6">
         <Tabs defaultValue="dashboard" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-            <TabsTrigger value="main">
+          <TabsList className="grid w-full grid-cols-4 mb-6">
+            <TabsTrigger value="dashboard" className="text-sm">Dashboard</TabsTrigger>
+            <TabsTrigger value="main" className="text-sm">
               {user?.role === 'farmer' ? 'My Crops' : user?.role === 'distributor' ? 'Market' : 'Tasks'}
             </TabsTrigger>
-            <TabsTrigger value="contracts">Contracts</TabsTrigger>
-            <TabsTrigger value="wallet">Wallet</TabsTrigger>
+            <TabsTrigger value="contracts" className="text-sm">Contracts</TabsTrigger>
+            <TabsTrigger value="wallet" className="text-sm">Wallet</TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard" className="mt-6">

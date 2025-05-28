@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -19,7 +19,7 @@ interface NotificationsDropdownProps {
 }
 
 const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({ onViewAll }) => {
-  const notifications: Notification[] = [
+  const [notifications, setNotifications] = useState<Notification[]>([
     {
       id: '1',
       title: 'Crop Verified',
@@ -60,7 +60,7 @@ const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({ onViewAll
       type: 'info',
       unread: false
     }
-  ];
+  ]);
 
   const unreadCount = notifications.filter(n => n.unread).length;
 
@@ -73,50 +73,92 @@ const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({ onViewAll
     }
   };
 
+  const markAsRead = (notificationId: string) => {
+    setNotifications(prev => 
+      prev.map(notif => 
+        notif.id === notificationId 
+          ? { ...notif, unread: false }
+          : notif
+      )
+    );
+  };
+
+  const handleNotificationClick = (notification: Notification) => {
+    if (notification.unread) {
+      markAsRead(notification.id);
+    }
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="relative">
+        <Button variant="ghost" size="sm" className="relative hover:bg-gray-100 transition-colors">
           <Bell className="w-4 h-4" />
           {unreadCount > 0 && (
-            <Badge className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center">
+            <Badge className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center animate-pulse">
               {unreadCount}
             </Badge>
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-80 max-h-96 overflow-y-auto bg-white">
-        <div className="p-3 border-b">
-          <h3 className="font-semibold">Notifications</h3>
+      <DropdownMenuContent align="end" className="w-80 max-h-96 overflow-y-auto bg-white border shadow-lg z-50">
+        <div className="p-3 border-b bg-gray-50">
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold text-gray-900">Notifications</h3>
+            {unreadCount > 0 && (
+              <Badge variant="secondary" className="text-xs">
+                {unreadCount} new
+              </Badge>
+            )}
+          </div>
         </div>
-        {notifications.slice(0, 5).map((notification) => (
-          <DropdownMenuItem key={notification.id} className="p-3 cursor-pointer hover:bg-gray-50">
-            <div className="flex space-x-3 w-full">
-              <span className="text-lg">{getNotificationIcon(notification.type)}</span>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between">
-                  <p className={`text-sm font-medium ${notification.unread ? 'text-gray-900' : 'text-gray-600'}`}>
-                    {notification.title}
-                  </p>
-                  {notification.unread && (
-                    <div className="w-2 h-2 bg-blue-500 rounded-full" />
-                  )}
+        
+        {notifications.length === 0 ? (
+          <div className="p-6 text-center text-gray-500">
+            <Bell className="w-8 h-8 mx-auto mb-2 opacity-50" />
+            <p>No notifications yet</p>
+          </div>
+        ) : (
+          <>
+            {notifications.slice(0, 5).map((notification) => (
+              <DropdownMenuItem 
+                key={notification.id} 
+                className="p-3 cursor-pointer hover:bg-gray-50 focus:bg-gray-50 border-b border-gray-100 last:border-b-0"
+                onClick={() => handleNotificationClick(notification)}
+              >
+                <div className="flex space-x-3 w-full">
+                  <span className="text-lg flex-shrink-0">{getNotificationIcon(notification.type)}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-1">
+                      <p className={`text-sm font-medium line-clamp-1 ${notification.unread ? 'text-gray-900' : 'text-gray-600'}`}>
+                        {notification.title}
+                      </p>
+                      {notification.unread && (
+                        <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0" />
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-500 line-clamp-2 mb-1">
+                      {notification.message}
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      {notification.time}
+                    </p>
+                  </div>
                 </div>
-                <p className="text-xs text-gray-500 mt-1 line-clamp-2">
-                  {notification.message}
-                </p>
-                <p className="text-xs text-gray-400 mt-1">
-                  {notification.time}
-                </p>
-              </div>
+              </DropdownMenuItem>
+            ))}
+            
+            <div className="p-3 border-t bg-gray-50">
+              <Button 
+                variant="ghost" 
+                onClick={onViewAll} 
+                className="w-full text-sm hover:bg-gray-100 transition-colors"
+              >
+                View All Notifications
+              </Button>
             </div>
-          </DropdownMenuItem>
-        ))}
-        <div className="p-3 border-t">
-          <Button variant="ghost" onClick={onViewAll} className="w-full text-sm">
-            See all notifications
-          </Button>
-        </div>
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

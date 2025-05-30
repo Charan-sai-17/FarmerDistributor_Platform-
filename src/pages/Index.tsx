@@ -20,6 +20,7 @@ import HelpSupportModal from '@/components/support/HelpSupportModal';
 import CropDetailsModal from '@/components/crop/CropDetailsModal';
 import LoadingSpinner from '@/components/ui/loading-spinner';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import WalletDashboard from '@/components/wallet/WalletDashboard';
 
 const AppContent = () => {
   const [currentView, setCurrentView] = useState('landing');
@@ -580,7 +581,7 @@ const AppContent = () => {
                     {[
                       { 
                         icon: '🌱', 
-                        text: language === 'en' ? 'New crop verification request' : 'కొత్త పంట ధృవీకరణ అభ్యర్థన', 
+                        text: language === 'en' ? 'New crop verification request' : 'కొత్త పంట ధృవీకరण అభ్యర్థన', 
                         time: language === 'en' ? '2 hours ago' : '2 గంటల క్రితం'
                       },
                       { 
@@ -673,27 +674,7 @@ const AppContent = () => {
           </TabsContent>
 
           <TabsContent value="wallet">
-            <Card>
-              <CardContent className="p-4 sm:p-6">
-                <h3 className="font-heading font-semibold mb-4">{t('wallet')} & Transactions</h3>
-                <div className="text-center py-6 sm:py-8">
-                  <div className="text-3xl sm:text-4xl font-mono font-bold text-primary mb-2">
-                    ₹{user?.walletBalance.toLocaleString()}
-                  </div>
-                  <p className="text-gray-600 mb-4 sm:mb-6">
-                    {language === 'en' ? 'Current Balance' : 'ప్రస్తుత బ్యాలెన్స్'}
-                  </p>
-                  <div className="flex flex-col sm:flex-row justify-center space-y-2 sm:space-y-0 sm:space-x-4">
-                    <Button className="w-full sm:w-auto">
-                      {language === 'en' ? 'Add Funds' : 'నిధులు జోడించండి'}
-                    </Button>
-                    <Button variant="outline" className="w-full sm:w-auto">
-                      {language === 'en' ? 'Withdraw' : 'ఉపసంహరించండి'}
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <WalletDashboard />
           </TabsContent>
         </Tabs>
       </main>

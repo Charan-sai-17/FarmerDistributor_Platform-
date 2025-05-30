@@ -48,7 +48,7 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   }, []);
 
   const checkConnection = async () => {
-    if (typeof window.ethereum !== 'undefined') {
+    if (typeof window !== 'undefined' && window.ethereum) {
       try {
         const accounts = await window.ethereum.request({ method: 'eth_accounts' });
         if (accounts.length > 0) {
@@ -63,7 +63,7 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   };
 
   const connectWallet = async () => {
-    if (typeof window.ethereum === 'undefined') {
+    if (typeof window === 'undefined' || !window.ethereum) {
       toast({
         title: "Wallet Not Found",
         description: "Please install MetaMask or another Web3 wallet.",

@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 export interface Crop {
@@ -43,6 +42,7 @@ export interface User {
   role: 'farmer' | 'distributor' | 'agent';
   location: string;
   walletBalance: number;
+  bio?: string;
 }
 
 export interface VerificationTask {

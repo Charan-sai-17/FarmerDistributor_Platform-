@@ -1,366 +1,205 @@
 
-import { useState } from 'react';
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { User, Home, Calendar, Bell, Plus, LogOut, HelpCircle } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { AppProvider, useApp, Crop } from '@/contexts/AppContext';
-import { LanguageProvider, useLanguage } from '@/contexts/LanguageContext';
+import { 
+  Bell, 
+  Settings, 
+  LogOut, 
+  Wallet,
+  Globe,
+  Menu,
+  X
+} from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import AddCropForm from '@/components/farmer/AddCropForm';
-import CropCard from '@/components/farmer/CropCard';
-import CropMarketplace from '@/components/distributor/CropMarketplace';
-import VerificationDashboard from '@/components/agent/VerificationDashboard';
-import NotificationsPage from '@/components/notifications/NotificationsPage';
-import NotificationsDropdown from '@/components/notifications/NotificationsDropdown';
-import HelpSupportModal from '@/components/support/HelpSupportModal';
-import CropDetailsModal from '@/components/crop/CropDetailsModal';
-import LoadingSpinner from '@/components/ui/loading-spinner';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import WalletDashboard from '@/components/wallet/WalletDashboard';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { Link } from 'react-router-dom';
+import FarmerDashboard from '@/components/dashboard/FarmerDashboard';
+import DistributorDashboard from '@/components/dashboard/DistributorDashboard';
+import AgentDashboard from '@/components/dashboard/AgentDashboard';
 
-const AppContent = () => {
-  const [showAddCrop, setShowAddCrop] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [showHelp, setShowHelp] = useState(false);
-  const [selectedCrop, setSelectedCrop] = useState<Crop | null>(null);
-  const [showCropDetails, setShowCropDetails] = useState(false);
-  const { toast } = useToast();
+const Index = () => {
   const { user, logout } = useAuth();
-  const { crops, contracts } = useApp();
   const { language, setLanguage, t } = useLanguage();
-  const navigate = useNavigate();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const handleLogout = () => {
-    logout();
-    // Navigation will be handled by the auth context
+  const getRoleBadgeColor = (role: string) => {
+    switch (role) {
+      case 'farmer': return 'bg-green-500';
+      case 'distributor': return 'bg-blue-500';
+      case 'agent': return 'bg-purple-500';
+      default: return 'bg-gray-500';
+    }
   };
 
-  const handleViewCropDetails = (crop: Crop) => {
-    setSelectedCrop(crop);
-    setShowCropDetails(true);
+  const renderDashboard = () => {
+    switch (user?.role) {
+      case 'farmer':
+        return <FarmerDashboard />;
+      case 'distributor':
+        return <DistributorDashboard />;
+      case 'agent':
+        return <AgentDashboard />;
+      default:
+        return <FarmerDashboard />;
+    }
   };
 
-  const toggleLanguage = () => {
-    setLanguage(language === 'en' ? 'te' : 'en');
-    toast({
-      title: language === 'en' ? 'Language Changed' : 'భాష మార్చబడింది',
-      description: language === 'en' ? 'Switched to Telugu' : 'ఇంగ్లీష్‌కు మార్చబడింది',
-    });
-  };
-
-  // Notifications Page
-  if (showNotifications) {
-    return <NotificationsPage onBack={() => setShowNotifications(false)} />;
-  }
-
-  // Add Crop Form
-  if (showAddCrop && user?.role === 'farmer') {
-    return <AddCropForm onBack={() => setShowAddCrop(false)} />;
-  }
-
-  // Dashboard View - Enhanced Mobile Responsive
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header - Mobile Optimized */}
-      <header className="bg-white shadow-sm border-b sticky top-0 z-40">
-        <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-3">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-2 sm:space-x-3">
-              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-primary rounded-lg flex items-center justify-center">
-                <Home className="w-3 h-3 sm:w-5 sm:h-5 text-white" />
+      {/* Header */}
+      <motion.header 
+        initial={{ y: -100 }}
+        animate={{ y: 0 }}
+        className="bg-white shadow-sm border-b sticky top-0 z-50"
+      >
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            {/* Logo */}
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
+                <span className="text-white font-bold text-lg">HN</span>
               </div>
               <div>
-                <span className="text-sm sm:text-lg font-heading font-semibold">AgroConnect</span>
-                <Badge variant="secondary" className="ml-1 sm:ml-2 text-xs">
-                  {user?.role?.charAt(0).toUpperCase() + user?.role?.slice(1)}
-                </Badge>
+                <h1 className="text-xl font-bold text-gray-900">Harvest Nexus</h1>
+                <p className="text-xs text-gray-500 hidden sm:block">Connect • Invest • Harvest</p>
               </div>
             </div>
-            <div className="flex items-center space-x-1 sm:space-x-3">
+
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center space-x-6">
+              {/* Language Selector */}
+              <div className="flex items-center space-x-2">
+                <Globe className="w-4 h-4 text-gray-600" />
+                <select 
+                  value={language}
+                  onChange={(e) => setLanguage(e.target.value as 'en' | 'te')}
+                  className="bg-transparent border border-gray-200 rounded-lg px-2 py-1 text-sm"
+                >
+                  <option value="en">EN</option>
+                  <option value="te">TE</option>
+                </select>
+              </div>
+
+              {/* Wallet Button */}
+              <Button variant="outline" size="sm" className="rounded-xl">
+                <Wallet className="w-4 h-4 mr-2" />
+                Wallet
+              </Button>
+
+              {/* Notifications */}
+              <Button variant="ghost" size="sm" className="relative">
+                <Bell className="w-5 h-5" />
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">
+                  3
+                </span>
+              </Button>
+
+              {/* User Profile */}
+              <div className="flex items-center space-x-3">
+                <div className="text-right">
+                  <p className="text-sm font-medium text-gray-900">{user?.name}</p>
+                  <Badge className={`${getRoleBadgeColor(user?.role || 'farmer')} text-white text-xs`}>
+                    {user?.role}
+                  </Badge>
+                </div>
+                <Link to="/profile">
+                  <Avatar className="w-10 h-10 cursor-pointer hover:ring-2 hover:ring-primary/20 transition-all">
+                    <AvatarImage src={user?.avatar} alt={user?.name} />
+                    <AvatarFallback className="bg-primary text-white">
+                      {user?.name?.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
+                </Link>
+              </div>
+
+              {/* Logout */}
               <Button 
                 variant="ghost" 
                 size="sm" 
-                onClick={toggleLanguage} 
-                className="hover:bg-gray-100 text-xs sm:text-sm px-2 sm:px-3"
+                onClick={logout}
+                className="text-red-600 hover:text-red-700 hover:bg-red-50"
               >
-                {language === 'en' ? 'తె' : 'En'}
+                <LogOut className="w-4 h-4" />
               </Button>
-              <NotificationsDropdown onViewAll={() => setShowNotifications(true)} />
-              <Button variant="ghost" size="sm" onClick={() => setShowHelp(true)} className="hover:bg-gray-100 p-1 sm:p-2">
-                <HelpCircle className="w-3 h-3 sm:w-4 sm:h-4" />
-              </Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="hover:bg-gray-100 p-1 sm:p-2">
-                    <User className="w-3 h-3 sm:w-4 sm:h-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-40 sm:w-48 bg-white border shadow-lg z-50">
-                  <DropdownMenuItem 
-                    onClick={() => navigate('/profile')}
-                    className="cursor-pointer hover:bg-gray-50 focus:bg-gray-50 text-sm"
-                  >
-                    <User className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
-                    {t('profile')}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={handleLogout}
-                    className="cursor-pointer hover:bg-gray-50 focus:bg-gray-50 text-red-600 text-sm"
-                  >
-                    <LogOut className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
-                    {t('logout')}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
             </div>
+
+            {/* Mobile Menu Button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="md:hidden"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </Button>
           </div>
-        </div>
-      </header>
 
-      {/* Main Content - Mobile Optimized */}
-      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
-        <Tabs defaultValue="dashboard" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-4 sm:mb-6 h-9 sm:h-10">
-            <TabsTrigger value="dashboard" className="text-xs sm:text-sm px-1 sm:px-3">
-              {t('dashboard')}
-            </TabsTrigger>
-            <TabsTrigger value="main" className="text-xs sm:text-sm px-1 sm:px-3">
-              {user?.role === 'farmer' ? t('my_crops') : user?.role === 'distributor' ? t('market') : t('tasks')}
-            </TabsTrigger>
-            <TabsTrigger value="contracts" className="text-xs sm:text-sm px-1 sm:px-3">
-              {t('contracts')}
-            </TabsTrigger>
-            <TabsTrigger value="wallet" className="text-xs sm:text-sm px-1 sm:px-3">
-              {t('wallet')}
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="dashboard" className="mt-4 sm:mt-6">
-            <div className="grid gap-4 sm:gap-6">
-              {/* Welcome Card */}
-              <Card className="glass-card">
-                <CardContent className="p-4 sm:p-6">
-                  <h1 className="text-xl sm:text-2xl font-heading font-bold mb-2">
-                    {t('welcome')} back, {user?.name}! 👋
-                  </h1>
-                  <p className="text-gray-600 text-sm sm:text-base">
-                    {user?.role === 'farmer' && (language === 'en' 
-                      ? "Manage your crops and track your earnings" 
-                      : "మీ పంటలను నిర్వహించండి మరియు మీ ఆదాయాలను ట్రాక్ చేయండి"
-                    )}
-                    {user?.role === 'distributor' && (language === 'en'
-                      ? "Discover new crops and manage your investments"
-                      : "కొత్త పంటలను కనుగొనండి మరియు మీ పెట్టుబడులను నిర్వహించండి"
-                    )}
-                    {user?.role === 'agent' && (language === 'en'
-                      ? "Review verification tasks and update crop status"
-                      : "ధృవీకరణ పనులను సమీక్షించండి మరియు పంట స్థితిని అప్‌డేట్ చేయండి"
-                    )}
-                  </p>
-                </CardContent>
-              </Card>
-
-              {/* Stats Grid - Mobile Responsive */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-                {user?.role === 'farmer' && (
-                  <>
-                    <Card className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-3 sm:p-4 text-center">
-                        <div className="text-xl sm:text-2xl font-mono font-bold text-primary">{crops.filter(c => c.farmerId === user.id).length}</div>
-                        <div className="text-xs sm:text-sm text-gray-600">{language === 'en' ? 'Active Crops' : 'క్రియాశీల పంటలు'}</div>
-                      </CardContent>
-                    </Card>
-                    <Card className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-3 sm:p-4 text-center">
-                        <div className="text-xl sm:text-2xl font-mono font-bold text-green-600">₹{crops.filter(c => c.farmerId === user.id).reduce((sum, c) => sum + c.price, 0).toLocaleString()}</div>
-                        <div className="text-xs sm:text-sm text-gray-600">{language === 'en' ? 'Expected Returns' : 'అంచనా రాబడులు'}</div>
-                      </CardContent>
-                    </Card>
-                    <Card className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-3 sm:p-4 text-center">
-                        <div className="text-xl sm:text-2xl font-mono font-bold text-orange-600">{crops.filter(c => c.farmerId === user.id && c.status === 'pending').length}</div>
-                        <div className="text-xs sm:text-sm text-gray-600">{language === 'en' ? 'Pending Verification' : 'పెండింగ్ ధృవీకరణ'}</div>
-                      </CardContent>
-                    </Card>
-                  </>
-                )}
-
-                {user?.role === 'distributor' && (
-                  <>
-                    <Card className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-3 sm:p-4 text-center">
-                        <div className="text-xl sm:text-2xl font-mono font-bold text-blue-600">{crops.filter(c => c.status === 'verified').length}</div>
-                        <div className="text-xs sm:text-sm text-gray-600">{language === 'en' ? 'Available Crops' : 'అందుబాటులో ఉన్న పంటలు'}</div>
-                      </CardContent>
-                    </Card>
-                    <Card className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-3 sm:p-4 text-center">
-                        <div className="text-xl sm:text-2xl font-mono font-bold text-green-600">₹250,000</div>
-                        <div className="text-xs sm:text-sm text-gray-600">{language === 'en' ? 'Wallet Balance' : 'వాలెట్ బ్యాలెన్స్'}</div>
-                      </CardContent>
-                    </Card>
-                    <Card className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-3 sm:p-4 text-center">
-                        <div className="text-xl sm:text-2xl font-mono font-bold text-purple-600">{contracts.filter(c => c.distributorId === user.id).length}</div>
-                        <div className="text-xs sm:text-sm text-gray-600">{language === 'en' ? 'Active Contracts' : 'క్రియాశీల ఒప్పందాలు'}</div>
-                      </CardContent>
-                    </Card>
-                  </>
-                )}
-
-                {user?.role === 'agent' && (
-                  <>
-                    <Card className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-3 sm:p-4 text-center">
-                        <div className="text-xl sm:text-2xl font-mono font-bold text-orange-600">8</div>
-                        <div className="text-xs sm:text-sm text-gray-600">{language === 'en' ? 'Pending Verifications' : 'పెండింగ్ ధృవీకరణలు'}</div>
-                      </CardContent>
-                    </Card>
-                    <Card className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-3 sm:p-4 text-center">
-                        <div className="text-xl sm:text-2xl font-mono font-bold text-green-600">₹15,000</div>
-                        <div className="text-xs sm:text-sm text-gray-600">{language === 'en' ? 'Monthly Earnings' : 'నెలవారీ ఆదాయాలు'}</div>
-                      </CardContent>
-                    </Card>
-                    <Card className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-3 sm:p-4 text-center">
-                        <div className="text-xl sm:text-2xl font-mono font-bold text-blue-600">23</div>
-                        <div className="text-xs sm:text-sm text-gray-600">{language === 'en' ? 'Completed Tasks' : 'పూర్తయిన పనులు'}</div>
-                      </CardContent>
-                    </Card>
-                  </>
-                )}
+          {/* Mobile Menu */}
+          {isMobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="md:hidden mt-4 pb-4 border-t border-gray-100"
+            >
+              <div className="flex items-center space-x-3 mt-4 mb-4">
+                <Avatar className="w-12 h-12">
+                  <AvatarImage src={user?.avatar} alt={user?.name} />
+                  <AvatarFallback className="bg-primary text-white">
+                    {user?.name?.charAt(0)}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="font-medium text-gray-900">{user?.name}</p>
+                  <Badge className={`${getRoleBadgeColor(user?.role || 'farmer')} text-white text-xs`}>
+                    {user?.role}
+                  </Badge>
+                </div>
               </div>
-
-              {/* Recent Activity */}
-              <Card>
-                <CardContent className="p-4 sm:p-6">
-                  <h3 className="font-heading font-semibold mb-4 text-sm sm:text-base">
-                    {language === 'en' ? 'Recent Activity' : 'ఇటీవలి కార్యకలాపాలు'}
-                  </h3>
-                  <div className="space-y-3">
-                    {[
-                      { 
-                        icon: '🌱', 
-                        text: language === 'en' ? 'New crop verification request' : 'కొత్త పంట ధృవీకరణ అభ్యర్థన', 
-                        time: language === 'en' ? '2 hours ago' : '2 గంటల క్రితం'
-                      },
-                      { 
-                        icon: '💰', 
-                        text: language === 'en' ? 'Payment received for tomato harvest' : 'టమోటా పంట కోసం చెల్లింపు వచ్చింది', 
-                        time: language === 'en' ? '1 day ago' : '1 రోజు క్రితం'
-                      },
-                      { 
-                        icon: '📝', 
-                        text: language === 'en' ? 'Contract signed with distributor' : 'పంపిణీదారుతో ఒప్పందం సంతకం చేయబడింది', 
-                        time: language === 'en' ? '2 days ago' : '2 రోజుల క్రితం'
-                      }
-                    ].map((activity, index) => (
-                      <div key={index} className="flex items-center space-x-3 p-2 sm:p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                        <span className="text-lg sm:text-xl">{activity.icon}</span>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs sm:text-sm truncate">{activity.text}</p>
-                          <p className="text-xs text-gray-500">{activity.time}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="main">
-            {user?.role === 'farmer' && (
-              <div className="space-y-4 sm:space-y-6">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-3 sm:space-y-0">
-                  <h2 className="text-xl sm:text-2xl font-heading font-bold">{t('my_crops')}</h2>
-                  <Button 
-                    onClick={() => setShowAddCrop(true)}
-                    className="w-full sm:w-auto"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    {t('add_new_crop')}
+              
+              <div className="space-y-2">
+                <Button variant="ghost" className="w-full justify-start">
+                  <Wallet className="w-4 h-4 mr-2" />
+                  Wallet
+                </Button>
+                <Button variant="ghost" className="w-full justify-start">
+                  <Bell className="w-4 h-4 mr-2" />
+                  Notifications
+                </Button>
+                <Link to="/profile" className="w-full">
+                  <Button variant="ghost" className="w-full justify-start">
+                    <Settings className="w-4 h-4 mr-2" />
+                    Profile Settings
                   </Button>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                  {crops.filter(crop => crop.farmerId === user.id).map(crop => (
-                    <CropCard
-                      key={crop.id}
-                      crop={crop}
-                      onViewDetails={handleViewCropDetails}
-                    />
-                  ))}
-                </div>
+                </Link>
+                <Button 
+                  variant="ghost" 
+                  onClick={logout}
+                  className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Logout
+                </Button>
               </div>
-            )}
-            
-            {user?.role === 'distributor' && <CropMarketplace onViewDetails={handleViewCropDetails} />}
-            
-            {user?.role === 'agent' && <VerificationDashboard />}
-          </TabsContent>
+            </motion.div>
+          )}
+        </div>
+      </motion.header>
 
-          <TabsContent value="contracts">
-            <Card>
-              <CardContent className="p-4 sm:p-6">
-                <h3 className="font-heading font-semibold mb-4">{t('contracts')}</h3>
-                <div className="space-y-4">
-                  {contracts.filter(contract => 
-                    contract.farmerId === user?.id || 
-                    contract.distributorId === user?.id || 
-                    contract.agentId === user?.id
-                  ).map(contract => (
-                    <div key={contract.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                      <div className="flex flex-col sm:flex-row justify-between items-start space-y-2 sm:space-y-0 mb-2">
-                        <div>
-                          <h4 className="font-semibold">Contract #{contract.id}</h4>
-                          <p className="text-sm text-gray-600">Crop ID: {contract.cropId}</p>
-                        </div>
-                        <Badge className={
-                          contract.status === 'active' ? 'bg-green-100 text-green-800' :
-                          contract.status === 'draft' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-gray-100 text-gray-800'
-                        }>
-                          {contract.status}
-                        </Badge>
-                      </div>
-                      <p className="text-lg font-mono font-bold text-primary">₹{contract.price.toLocaleString()}</p>
-                      <p className="text-sm text-gray-600 mt-2">{contract.terms}</p>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="wallet">
-            <WalletDashboard />
-          </TabsContent>
-        </Tabs>
+      {/* Main Content */}
+      <main className="container mx-auto px-4 py-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          {renderDashboard()}
+        </motion.div>
       </main>
-
-      {/* Modals */}
-      <HelpSupportModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
-      <CropDetailsModal 
-        isOpen={showCropDetails} 
-        onClose={() => setShowCropDetails(false)} 
-        crop={selectedCrop}
-      />
     </div>
-  );
-};
-
-const Index = () => {
-  return (
-    <LanguageProvider>
-      <AppProvider>
-        <AppContent />
-      </AppProvider>
-    </LanguageProvider>
   );
 };
 

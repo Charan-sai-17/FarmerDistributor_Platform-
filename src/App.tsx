@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import Landing from "./pages/Landing";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -11,6 +12,7 @@ import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import { WalletProvider } from "@/contexts/WalletContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +50,9 @@ const AppContent = () => {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Landing Page */}
+        <Route path="/" element={<Landing />} />
+        
         {/* Public Routes */}
         <Route path="/login" element={
           <PublicRoute>
@@ -72,9 +77,6 @@ const AppContent = () => {
           </ProtectedRoute>
         } />
         
-        {/* Redirect root to dashboard if authenticated, otherwise to login */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
-        
         {/* Catch-all route */}
         <Route path="*" element={<NotFound />} />
       </Routes>
@@ -87,11 +89,13 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <AuthProvider>
-        <WalletProvider>
-          <AppContent />
-        </WalletProvider>
-      </AuthProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <WalletProvider>
+            <AppContent />
+          </WalletProvider>
+        </AuthProvider>
+      </LanguageProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

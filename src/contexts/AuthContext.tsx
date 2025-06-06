@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -101,22 +100,34 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const login = async (email: string, password: string, rememberMe = false): Promise<boolean> => {
     setIsLoading(true);
     try {
+      console.log('Login attempt:', { email, rememberMe });
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Mock validation
-      if (email === 'farmer@test.com' && password === 'password') {
+      // Mock validation - accepting both demo credentials and google sign-in
+      const validCredentials = [
+        { email: 'farmer@test.com', password: 'password', role: 'farmer' as UserRole },
+        { email: 'agent@test.com', password: 'password', role: 'agent' as UserRole },
+        { email: 'distributor@test.com', password: 'password', role: 'distributor' as UserRole },
+        { email: 'google.user@gmail.com', password: 'google_auth_token', role: 'farmer' as UserRole }
+      ];
+
+      const validUser = validCredentials.find(cred => cred.email === email && cred.password === password);
+
+      if (validUser) {
         const mockUser: User = {
-          id: '1',
-          name: 'John Farmer',
+          id: Date.now().toString(),
+          name: validUser.role === 'farmer' ? 'John Farmer' : 
+                validUser.role === 'agent' ? 'Sarah Agent' : 'Mike Distributor',
           email,
           phone: '+919876543210',
-          role: 'farmer',
+          role: validUser.role,
           isEmailVerified: true,
           isPhoneVerified: true,
           profileCompletion: 85,
           language: 'en',
-          createdAt: new Date()
+          createdAt: new Date(),
+          avatar: email.includes('google') ? 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face' : undefined
         };
         
         setUser(mockUser);
@@ -125,25 +136,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           localStorage.setItem('remember_me', 'true');
         }
         
-        toast({
-          title: "Welcome back!",
-          description: `Successfully logged in as ${mockUser.name}`,
-        });
+        console.log('Login successful for:', mockUser);
         return true;
       } else {
-        toast({
-          title: "Login Failed",
-          description: "Invalid email or password",
-          variant: "destructive"
-        });
-        return false;
+        console.log('Invalid credentials provided');
+        throw new Error('Invalid credentials');
       }
     } catch (error) {
-      toast({
-        title: "Login Error",
-        description: "Something went wrong. Please try again.",
-        variant: "destructive"
-      });
+      console.error('Login error:', error);
       return false;
     } finally {
       setIsLoading(false);

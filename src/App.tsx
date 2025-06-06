@@ -10,6 +10,11 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
+import Contracts from "./pages/Contracts";
+import Wallet from "./pages/Wallet";
+import CropExplorer from "./pages/CropExplorer";
+import Notifications from "./pages/Notifications";
+import Support from "./pages/Support";
 import { WalletProvider } from "@/contexts/WalletContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
@@ -74,6 +79,31 @@ const AppContent = () => {
         <Route path="/profile" element={
           <ProtectedRoute>
             <Profile />
+          </ProtectedRoute>
+        } />
+        <Route path="/contracts" element={
+          <ProtectedRoute>
+            <Contracts />
+          </ProtectedRoute>
+        } />
+        <Route path="/wallet" element={
+          <ProtectedRoute>
+            <Wallet />
+          </ProtectedRoute>
+        } />
+        <Route path="/crop-explorer" element={
+          <ProtectedRoute>
+            <CropExplorer />
+          </ProtectedRoute>
+        } />
+        <Route path="/notifications" element={
+          <ProtectedRoute>
+            <Notifications />
+          </ProtectedRoute>
+        } />
+        <Route path="/support" element={
+          <ProtectedRoute>
+            <Support />
           </ProtectedRoute>
         } />
         

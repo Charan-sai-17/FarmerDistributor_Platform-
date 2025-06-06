@@ -11,7 +11,10 @@ import {
   Wallet,
   Globe,
   Menu,
-  X
+  X,
+  TrendingUp,
+  FileText,
+  HelpCircle
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
